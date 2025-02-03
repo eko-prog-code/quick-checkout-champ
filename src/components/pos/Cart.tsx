@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Minus, Plus, Trash2, X } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { formatIDR } from "@/lib/currency";
 
 interface CartProps {
   items: CartItem[];
@@ -39,7 +40,7 @@ const Cart = ({
     const change = parseFloat(amountPaid) - subtotal;
     toast({
       title: "Sale completed!",
-      description: `Change due: $${change.toFixed(2)}`,
+      description: `Change due: ${formatIDR(change)}`,
     });
     onClearCart();
     setAmountPaid("");
@@ -68,7 +69,7 @@ const Cart = ({
             <div className="flex-1">
               <h3 className="font-medium">{item.name}</h3>
               <p className="text-sm text-muted-foreground">
-                ${item.regularPrice.toFixed(2)}
+                {formatIDR(item.regularPrice)}
               </p>
             </div>
             <div className="flex items-center space-x-2">
@@ -103,7 +104,7 @@ const Cart = ({
       <div className="p-4 border-t bg-muted">
         <div className="flex justify-between mb-4">
           <span className="font-bold">Subtotal:</span>
-          <span className="font-bold">${subtotal.toFixed(2)}</span>
+          <span className="font-bold">{formatIDR(subtotal)}</span>
         </div>
         <div className="space-y-4">
           <div>
@@ -120,10 +121,7 @@ const Cart = ({
             <div className="flex justify-between text-sm">
               <span>Change:</span>
               <span>
-                $
-                {(
-                  Math.max(parseFloat(amountPaid) - subtotal, 0) || 0
-                ).toFixed(2)}
+                {formatIDR(Math.max(parseFloat(amountPaid) - subtotal, 0) || 0)}
               </span>
             </div>
           )}
