@@ -1,0 +1,54 @@
+import { ref, push, remove, set, onValue, off } from 'firebase/database';
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '@/lib/firebase';
+import { Product } from '@/types/pos';
+
+const PRODUCTS_REF = 'products';
+
+export const createProduct = async (product: Omit<Product, 'id'>, imageFile: File): Promise<void> => {
+  try {
+    // Upload image first
+    const imageRef = storageRef(storage, `product-images/${Date.now()}-${imageFile.name}`);
+    const uploadResult = await uploadBytes(imageRef, imageFile);
+    const imageUrl = await getDownloadURL(uploadResult.ref);
+
+    // Create product with image URL
+    const newProductRef = push(ref(db, PRODUCTS_REF));
+    await set(newProductRef, {
+      ...product,
+      id: newProductRef.key,
+      image: imageUrl
+    });
+
+    console.log('Product created successfully');
+  } catch (error) {
+    console.error('Error creating product:', error);
+    throw error;
+  }
+};
+
+export const deleteProduct = async (productId: string): Promise<void> => {
+  try {
+    await remove(ref(db, `${PRODUCTS_REF}/${productId}`));
+    console.log('Product deleted successfully');
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    throw error;
+  }
+};
+
+export const subscribeToProducts = (callback: (products: Product[]) => void): () => void => {
+  const productsRef = ref(db, PRODUCTS_REF);
+  
+  onValue(productsRef, (snapshot) => {
+    const products: Product[] = [];
+    snapshot.forEach((childSnapshot) => {
+      const product = childSnapshot.val();
+      products.push(product);
+    });
+    callback(products);
+  });
+
+  // Return unsubscribe function
+  return () => off(productsRef);
+};

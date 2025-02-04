@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +13,7 @@ import { Plus } from "lucide-react";
 import ProductGrid from "@/components/pos/ProductGrid";
 import { Product } from "@/types/pos";
 import { useToast } from "@/components/ui/use-toast";
+import { createProduct, deleteProduct, subscribeToProducts } from "@/services/productService";
 
 const Products = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -22,51 +23,84 @@ const Products = () => {
     regularPrice: "",
     wholesalePrice: "",
     stock: "",
-    image: "/placeholder.svg",
   });
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const { toast } = useToast();
 
-  const handleAddProduct = () => {
-    if (!newProduct.name || !newProduct.regularPrice || !newProduct.stock) {
+  useEffect(() => {
+    // Subscribe to products
+    const unsubscribe = subscribeToProducts((updatedProducts) => {
+      setProducts(updatedProducts);
+    });
+
+    // Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, []);
+
+  const handleAddProduct = async () => {
+    if (!newProduct.name || !newProduct.regularPrice || !newProduct.stock || !selectedImage) {
       toast({
         title: "Missing fields",
-        description: "Please fill in all required fields",
+        description: "Please fill in all required fields and select an image",
         variant: "destructive",
       });
       return;
     }
 
-    const product: Product = {
-      id: Date.now().toString(),
-      name: newProduct.name,
-      regularPrice: parseFloat(newProduct.regularPrice),
-      wholesalePrice: parseFloat(newProduct.wholesalePrice || "0"),
-      stock: parseInt(newProduct.stock),
-      image: newProduct.image,
-    };
+    try {
+      await createProduct(
+        {
+          name: newProduct.name,
+          regularPrice: parseFloat(newProduct.regularPrice),
+          wholesalePrice: parseFloat(newProduct.wholesalePrice || "0"),
+          stock: parseInt(newProduct.stock),
+          image: "", // This will be set by the service
+        },
+        selectedImage
+      );
 
-    setProducts([...products, product]);
-    setIsOpen(false);
-    setNewProduct({
-      name: "",
-      regularPrice: "",
-      wholesalePrice: "",
-      stock: "",
-      image: "/placeholder.svg",
-    });
+      setIsOpen(false);
+      setNewProduct({
+        name: "",
+        regularPrice: "",
+        wholesalePrice: "",
+        stock: "",
+      });
+      setSelectedImage(null);
 
-    toast({
-      title: "Product added",
-      description: "The product has been added successfully",
-    });
+      toast({
+        title: "Product added",
+        description: "The product has been added successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add product. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleDeleteProduct = (productId: string) => {
-    setProducts(products.filter((p) => p.id !== productId));
-    toast({
-      title: "Product deleted",
-      description: "The product has been removed successfully",
-    });
+  const handleDeleteProduct = async (productId: string) => {
+    try {
+      await deleteProduct(productId);
+      toast({
+        title: "Product deleted",
+        description: "The product has been removed successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete product. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedImage(e.target.files[0]);
+    }
   };
 
   return (
@@ -129,6 +163,15 @@ const Products = () => {
                   onChange={(e) =>
                     setNewProduct({ ...newProduct, stock: e.target.value })
                   }
+                />
+              </div>
+              <div>
+                <Label htmlFor="image">Product Image</Label>
+                <Input
+                  id="image"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
                 />
               </div>
               <Button onClick={handleAddProduct} className="w-full">
