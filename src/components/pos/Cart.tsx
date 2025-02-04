@@ -1,13 +1,15 @@
 import { useState } from "react";
-import { CartItem } from "@/types/pos";
+import { CartItem, Sale } from "@/types/pos";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, Trash2, X } from "lucide-react";
+import { Minus, Plus, Trash2, X, Printer } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { formatIDR } from "@/lib/currency";
+import { createSale } from "@/services/saleService";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -41,22 +43,60 @@ const Cart = ({
     }
   };
 
-  const handleCompleteSale = () => {
-    if (!amountPaid || parseFloat(amountPaid) < subtotal) {
+  const handleNumberBlur = (value: string, setter: (value: string) => void) => {
+    const number = parseFloat(value.replace(/[,.]/g, ''));
+    if (!isNaN(number)) {
+      setter(number.toLocaleString('id-ID'));
+    }
+  };
+
+  const handlePrintReceipt = () => {
+    const printContent = document.getElementById('receipt-content');
+    if (printContent) {
+      const originalContents = document.body.innerHTML;
+      document.body.innerHTML = printContent.innerHTML;
+      window.print();
+      document.body.innerHTML = originalContents;
+      window.location.reload(); // Reload to restore React app state
+    }
+  };
+
+  const handleCompleteSale = async () => {
+    if (!amountPaid || parseFloat(amountPaid.replace(/[,.]/g, '')) < subtotal) {
       toast({
-        title: "Invalid payment amount",
-        description: "Please enter a valid payment amount",
+        title: "Jumlah pembayaran tidak valid",
+        description: "Mohon masukkan jumlah pembayaran yang valid",
         variant: "destructive",
       });
       return;
     }
 
-    const change = parseFloat(amountPaid) - subtotal;
-    setShowReceipt(true);
-    toast({
-      title: "Sale completed!",
-      description: `Change due: ${formatIDR(change)}`,
-    });
+    const paidAmount = parseFloat(amountPaid.replace(/[,.]/g, ''));
+    const change = paidAmount - subtotal;
+
+    // Create sale record
+    const saleData: Omit<Sale, 'id'> = {
+      date: new Date().toISOString(),
+      items: items,
+      total: subtotal,
+      amountPaid: paidAmount,
+      change: change
+    };
+
+    try {
+      await createSale(saleData);
+      setShowReceipt(true);
+      toast({
+        title: "Transaksi berhasil!",
+        description: `Kembalian: ${formatIDR(change)}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Gagal menyimpan transaksi",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleCloseReceipt = () => {
@@ -69,7 +109,7 @@ const Cart = ({
     <>
       <div className="w-full md:w-96 bg-white border-l shadow-lg flex flex-col slide-in">
         <div className="p-4 border-b flex justify-between items-center bg-primary text-primary-foreground">
-          <h2 className="text-xl font-bold">Current Sale</h2>
+          <h2 className="text-xl font-bold">Penjualan</h2>
           <Button
             variant="ghost"
             size="icon"
@@ -129,27 +169,28 @@ const Cart = ({
 
         <div className="p-4 border-t bg-muted">
           <div className="flex justify-between mb-4">
-            <span className="font-bold">Subtotal:</span>
+            <span className="font-bold">Total:</span>
             <span className="font-bold">{formatIDR(subtotal)}</span>
           </div>
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-1">
-                Amount Paid
+                Jumlah Bayar
               </label>
               <Input
-                type="number"
+                type="text"
                 value={amountPaid}
                 onChange={(e) => setAmountPaid(e.target.value)}
-                placeholder="Enter amount"
+                onBlur={(e) => handleNumberBlur(e.target.value, setAmountPaid)}
+                placeholder="Masukkan jumlah"
                 className="w-full"
               />
             </div>
             {amountPaid && (
               <div className="flex justify-between text-sm">
-                <span>Change:</span>
+                <span>Kembalian:</span>
                 <span>
-                  {formatIDR(Math.max(parseFloat(amountPaid) - subtotal, 0) || 0)}
+                  {formatIDR(Math.max(parseFloat(amountPaid.replace(/[,.]/g, '')) - subtotal, 0) || 0)}
                 </span>
               </div>
             )}
@@ -159,7 +200,7 @@ const Cart = ({
               onClick={handleCompleteSale}
               disabled={items.length === 0}
             >
-              Complete Sale
+              Selesaikan Transaksi
             </Button>
           </div>
         </div>
@@ -168,9 +209,29 @@ const Cart = ({
       <Dialog open={showReceipt} onOpenChange={handleCloseReceipt}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Sale Receipt</DialogTitle>
+            <DialogTitle className="flex justify-between items-center">
+              <span>Struk Penjualan</span>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handlePrintReceipt}
+                className="ml-2"
+              >
+                <Printer className="w-4 h-4" />
+              </Button>
+            </DialogTitle>
+            <DialogDescription>
+              {new Date().toLocaleDateString('id-ID', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <div id="receipt-content" className="space-y-4">
             <div className="border-t border-b py-4">
               {items.map((item) => (
                 <div key={item.id} className="flex justify-between py-1">
@@ -186,13 +247,13 @@ const Cart = ({
               <span>{formatIDR(subtotal)}</span>
             </div>
             <div className="flex justify-between">
-              <span>Amount Paid</span>
-              <span>{formatIDR(parseFloat(amountPaid))}</span>
+              <span>Jumlah Bayar</span>
+              <span>{formatIDR(parseFloat(amountPaid.replace(/[,.]/g, '')))}</span>
             </div>
             <div className="flex justify-between">
-              <span>Change</span>
+              <span>Kembalian</span>
               <span>
-                {formatIDR(Math.max(parseFloat(amountPaid) - subtotal, 0) || 0)}
+                {formatIDR(Math.max(parseFloat(amountPaid.replace(/[,.]/g, '')) - subtotal, 0) || 0)}
               </span>
             </div>
           </div>
