@@ -9,16 +9,29 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import ProductGrid from "@/components/pos/ProductGrid";
 import { Product } from "@/types/pos";
 import { useToast } from "@/components/ui/use-toast";
 import { createProduct, deleteProduct, subscribeToProducts } from "@/services/productService";
 import { formatNumber } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+} from "@/components/ui/alert-dialog";
+import { ref, get } from "firebase/database";
+import { db } from "@/lib/firebase";
 
 const Products = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [showVerification, setShowVerification] = useState(true);
+  const [verificationPassword, setVerificationPassword] = useState("");
+  const [selectedRule, setSelectedRule] = useState("");
+  const [rules, setRules] = useState<Record<string, string>>({});
   const [newProduct, setNewProduct] = useState({
     name: "",
     regularPrice: "",
@@ -27,12 +40,40 @@ const Products = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const unsubscribe = subscribeToProducts((updatedProducts) => {
-      setProducts(updatedProducts);
-    });
-
-    return () => unsubscribe();
+    const fetchRules = async () => {
+      const rulesRef = ref(db, 'rules');
+      const snapshot = await get(rulesRef);
+      if (snapshot.exists()) {
+        setRules(snapshot.val());
+      }
+    };
+    fetchRules();
   }, []);
+
+  useEffect(() => {
+    if (!showVerification) {
+      const unsubscribe = subscribeToProducts((updatedProducts) => {
+        setProducts(updatedProducts);
+      });
+      return () => unsubscribe();
+    }
+  }, [showVerification]);
+
+  const handleVerify = () => {
+    if (rules[selectedRule] === verificationPassword) {
+      setShowVerification(false);
+      toast({
+        title: "Berhasil",
+        description: "Verifikasi berhasil",
+      });
+    } else {
+      toast({
+        title: "Error",
+        description: "Password salah",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleAddProduct = async () => {
     if (!newProduct.name || !newProduct.regularPrice || !newProduct.stock) {
@@ -95,6 +136,48 @@ const Products = () => {
       setNewProduct(prev => ({ ...prev, regularPrice: formattedValue }));
     }
   };
+
+  if (showVerification) {
+    return (
+      <AlertDialog open={showVerification}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Verifikasi Akses</AlertDialogTitle>
+            <AlertDialogDescription>
+              <div className="space-y-4 mt-4">
+                <div>
+                  <Label>Pilih Rule</Label>
+                  <select
+                    className="w-full p-2 border rounded mt-1"
+                    value={selectedRule}
+                    onChange={(e) => setSelectedRule(e.target.value)}
+                  >
+                    <option value="">Pilih rule...</option>
+                    {Object.keys(rules).map((rule) => (
+                      <option key={rule} value={rule}>
+                        {rule}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <Label>Password</Label>
+                  <Input
+                    type="password"
+                    value={verificationPassword}
+                    onChange={(e) => setVerificationPassword(e.target.value)}
+                  />
+                </div>
+                <Button onClick={handleVerify} className="w-full">
+                  Verifikasi
+                </Button>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+        </AlertDialogContent>
+      </AlertDialog>
+    );
+  }
 
   return (
     <div className="p-6">

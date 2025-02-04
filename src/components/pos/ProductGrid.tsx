@@ -39,8 +39,7 @@ const ProductGrid = ({ products, onAddToCart, onDeleteProduct }: ProductGridProp
             className="w-full"
             disabled={product.stock === 0}
           >
-            <Plus className="w-4 h-4 mr-2" />
-            Tambah ke Keranjang
+            <Plus className="h-4 w-4" />
           </Button>
         </Card>
       ))}
