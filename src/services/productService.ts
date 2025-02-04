@@ -5,12 +5,16 @@ import { Product } from '@/types/pos';
 
 const PRODUCTS_REF = 'products';
 
-export const createProduct = async (product: Omit<Product, 'id'>, imageFile: File): Promise<void> => {
+export const createProduct = async (product: Omit<Product, 'id'>, imageFile?: File): Promise<void> => {
   try {
-    // Upload image first
-    const imageRef = storageRef(storage, `product-images/${Date.now()}-${imageFile.name}`);
-    const uploadResult = await uploadBytes(imageRef, imageFile);
-    const imageUrl = await getDownloadURL(uploadResult.ref);
+    let imageUrl = '/placeholder.svg'; // Default image
+
+    if (imageFile) {
+      // Upload image only if provided
+      const imageRef = storageRef(storage, `product-images/${Date.now()}-${imageFile.name}`);
+      const uploadResult = await uploadBytes(imageRef, imageFile);
+      imageUrl = await getDownloadURL(uploadResult.ref);
+    }
 
     // Create product with image URL
     const newProductRef = push(ref(db, PRODUCTS_REF));
