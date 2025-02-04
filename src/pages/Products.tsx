@@ -14,6 +14,7 @@ import ProductGrid from "@/components/pos/ProductGrid";
 import { Product } from "@/types/pos";
 import { useToast } from "@/components/ui/use-toast";
 import { createProduct, deleteProduct, subscribeToProducts } from "@/services/productService";
+import { formatNumber } from "@/lib/utils";
 
 const Products = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -46,8 +47,7 @@ const Products = () => {
     try {
       await createProduct({
         name: newProduct.name,
-        regularPrice: parseFloat(newProduct.regularPrice),
-        wholesalePrice: 0,
+        regularPrice: parseFloat(newProduct.regularPrice.replace(/\./g, '')),
         stock: parseInt(newProduct.stock),
         image: "/placeholder.svg",
       });
@@ -88,6 +88,14 @@ const Products = () => {
     }
   };
 
+  const handlePriceBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\./g, '');
+    if (value) {
+      const formattedValue = formatNumber(parseFloat(value));
+      setNewProduct(prev => ({ ...prev, regularPrice: formattedValue }));
+    }
+  };
+
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
@@ -118,11 +126,11 @@ const Products = () => {
                 <Label htmlFor="regularPrice">Harga</Label>
                 <Input
                   id="regularPrice"
-                  type="number"
                   value={newProduct.regularPrice}
                   onChange={(e) =>
                     setNewProduct({ ...newProduct, regularPrice: e.target.value })
                   }
+                  onBlur={handlePriceBlur}
                 />
               </div>
               <div>
@@ -150,6 +158,6 @@ const Products = () => {
       />
     </div>
   );
-}
+};
 
 export default Products;

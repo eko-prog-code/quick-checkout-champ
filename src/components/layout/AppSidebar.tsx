@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { ShoppingCart, Package, BarChart2 } from "lucide-react";
+import { ShoppingCart, Package, BarChart2, Users } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -25,6 +25,11 @@ const items = [
     title: "Penjualan",
     path: "/sales",
     icon: BarChart2,
+  },
+  {
+    title: "Users",
+    path: "/users",
+    icon: Users,
   },
 ];
 
