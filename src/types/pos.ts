@@ -2,7 +2,6 @@ export interface Product {
   id: string;
   name: string;
   regularPrice: number;
-  wholesalePrice: number;
   stock: number;
   image: string;
 }
@@ -12,6 +11,8 @@ export interface CartItem extends Product {
 }
 
 export interface Sale {
+  id?: string;
+  date: string;
   items: CartItem[];
   total: number;
   amountPaid: number;

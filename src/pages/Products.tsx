@@ -21,61 +21,52 @@ const Products = () => {
   const [newProduct, setNewProduct] = useState({
     name: "",
     regularPrice: "",
-    wholesalePrice: "",
     stock: "",
   });
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    // Subscribe to products
     const unsubscribe = subscribeToProducts((updatedProducts) => {
       setProducts(updatedProducts);
     });
 
-    // Cleanup subscription on unmount
     return () => unsubscribe();
   }, []);
 
   const handleAddProduct = async () => {
-    if (!newProduct.name || !newProduct.regularPrice || !newProduct.stock || !selectedImage) {
+    if (!newProduct.name || !newProduct.regularPrice || !newProduct.stock) {
       toast({
-        title: "Missing fields",
-        description: "Please fill in all required fields and select an image",
+        title: "Data tidak lengkap",
+        description: "Mohon isi semua field yang diperlukan",
         variant: "destructive",
       });
       return;
     }
 
     try {
-      await createProduct(
-        {
-          name: newProduct.name,
-          regularPrice: parseFloat(newProduct.regularPrice),
-          wholesalePrice: parseFloat(newProduct.wholesalePrice || "0"),
-          stock: parseInt(newProduct.stock),
-          image: "", // This will be set by the service
-        },
-        selectedImage
-      );
+      await createProduct({
+        name: newProduct.name,
+        regularPrice: parseFloat(newProduct.regularPrice),
+        wholesalePrice: 0,
+        stock: parseInt(newProduct.stock),
+        image: "/placeholder.svg",
+      });
 
       setIsOpen(false);
       setNewProduct({
         name: "",
         regularPrice: "",
-        wholesalePrice: "",
         stock: "",
       });
-      setSelectedImage(null);
 
       toast({
-        title: "Product added",
-        description: "The product has been added successfully",
+        title: "Produk ditambahkan",
+        description: "Produk berhasil ditambahkan ke sistem",
       });
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to add product. Please try again.",
+        description: "Gagal menambahkan produk. Silakan coba lagi.",
         variant: "destructive",
       });
     }
@@ -85,42 +76,36 @@ const Products = () => {
     try {
       await deleteProduct(productId);
       toast({
-        title: "Product deleted",
-        description: "The product has been removed successfully",
+        title: "Produk dihapus",
+        description: "Produk berhasil dihapus dari sistem",
       });
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to delete product. Please try again.",
+        description: "Gagal menghapus produk. Silakan coba lagi.",
         variant: "destructive",
       });
-    }
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setSelectedImage(e.target.files[0]);
     }
   };
 
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Products Management</h1>
+        <h1 className="text-2xl font-bold">Manajemen Produk</h1>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="w-4 h-4 mr-2" />
-              Add Product
+              Tambah Produk
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add New Product</DialogTitle>
+              <DialogTitle>Tambah Produk Baru</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="name">Product Name</Label>
+                <Label htmlFor="name">Nama Produk</Label>
                 <Input
                   id="name"
                   value={newProduct.name}
@@ -130,7 +115,7 @@ const Products = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="regularPrice">Regular Price</Label>
+                <Label htmlFor="regularPrice">Harga</Label>
                 <Input
                   id="regularPrice"
                   type="number"
@@ -141,21 +126,7 @@ const Products = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="wholesalePrice">Wholesale Price</Label>
-                <Input
-                  id="wholesalePrice"
-                  type="number"
-                  value={newProduct.wholesalePrice}
-                  onChange={(e) =>
-                    setNewProduct({
-                      ...newProduct,
-                      wholesalePrice: e.target.value,
-                    })
-                  }
-                />
-              </div>
-              <div>
-                <Label htmlFor="stock">Stock</Label>
+                <Label htmlFor="stock">Stok</Label>
                 <Input
                   id="stock"
                   type="number"
@@ -165,17 +136,8 @@ const Products = () => {
                   }
                 />
               </div>
-              <div>
-                <Label htmlFor="image">Product Image</Label>
-                <Input
-                  id="image"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                />
-              </div>
               <Button onClick={handleAddProduct} className="w-full">
-                Add Product
+                Tambah Produk
               </Button>
             </div>
           </DialogContent>
@@ -188,6 +150,6 @@ const Products = () => {
       />
     </div>
   );
-};
+}
 
 export default Products;

@@ -17,12 +17,12 @@ const items = [
     icon: ShoppingCart,
   },
   {
-    title: "Products",
+    title: "Produk",
     path: "/products",
     icon: Package,
   },
   {
-    title: "Sales",
+    title: "Penjualan",
     path: "/sales",
     icon: BarChart2,
   },
@@ -32,7 +32,7 @@ export function AppSidebar() {
   const location = useLocation();
 
   return (
-    <Sidebar>
+    <Sidebar className="w-14">
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
@@ -44,7 +44,7 @@ export function AppSidebar() {
                     className={location.pathname === item.path ? "bg-accent" : ""}
                   >
                     <Link to={item.path} className="flex items-center justify-center p-2">
-                      <item.icon className="h-5 w-5" />
+                      <item.icon className="h-4 w-4" />
                       <span className="sr-only">{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
