@@ -19,7 +19,11 @@ const Sales = () => {
 
   useEffect(() => {
     const unsubscribe = subscribeToSales((salesData) => {
-      setSales(salesData);
+      // Sort sales by date in descending order (newest first)
+      const sortedSales = [...salesData].sort((a, b) => {
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      });
+      setSales(sortedSales);
     });
 
     return () => unsubscribe();
