@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -17,25 +17,58 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { ref, set, get } from "firebase/database";
+import { ref, set, get, remove } from "firebase/database";
 import { db } from "@/lib/firebase";
+import { Card } from "@/components/ui/card";
+import { X } from "lucide-react";
+
+interface Rule {
+  type: string;
+  password: string;
+}
 
 export function UserRules() {
   const [isOpen, setIsOpen] = useState(false);
   const [password, setPassword] = useState("");
   const [ruleType, setRuleType] = useState("");
+  const [rules, setRules] = useState<Record<string, Rule>>({});
   const { toast } = useToast();
 
-  const handleAddRule = async () => {
-    try {
+  useEffect(() => {
+    const fetchRules = async () => {
       const rulesRef = ref(db, 'rules');
       const snapshot = await get(rulesRef);
-      const existingRules = snapshot.val() || {};
+      if (snapshot.exists()) {
+        setRules(snapshot.val());
+      }
+    };
 
-      await set(rulesRef, {
-        ...existingRules,
-        [ruleType]: password
+    fetchRules();
+  }, []);
+
+  const handleAddRule = async () => {
+    if (!ruleType || !password) {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive",
       });
+      return;
+    }
+
+    try {
+      const rulesRef = ref(db, 'rules');
+      const newRule = {
+        type: ruleType,
+        password: password
+      };
+
+      await set(ref(db, `rules/${ruleType}`), newRule);
+
+      setRules(prev => ({
+        ...prev,
+        [ruleType]: newRule
+      }));
 
       setIsOpen(false);
       setPassword("");
@@ -54,43 +87,86 @@ export function UserRules() {
     }
   };
 
+  const handleDeleteRule = async (ruleType: string) => {
+    try {
+      await remove(ref(db, `rules/${ruleType}`));
+      
+      const newRules = { ...rules };
+      delete newRules[ruleType];
+      setRules(newRules);
+
+      toast({
+        title: "Berhasil",
+        description: "Rule berhasil dihapus",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Gagal menghapus rule",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" className="w-full">
-          Pilih Rules
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Tambah Rule Baru</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div>
-            <Label>Tipe Rule</Label>
-            <Select value={ruleType} onValueChange={setRuleType}>
-              <SelectTrigger>
-                <SelectValue placeholder="Pilih tipe rule" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="owner">Owner</SelectItem>
-                <SelectItem value="staff">Staff</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label>Password</Label>
-            <Input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-          <Button onClick={handleAddRule} className="w-full">
-            Tambah Rule
+    <div className="space-y-4">
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogTrigger asChild>
+          <Button variant="outline" className="w-full">
+            Pilih Rules
           </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Tambah Rule Baru</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Tipe Rule</Label>
+              <Select value={ruleType} onValueChange={setRuleType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih tipe rule" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="owner">Owner</SelectItem>
+                  <SelectItem value="staff">Staff</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Password</Label>
+              <Input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            <Button onClick={handleAddRule} className="w-full">
+              Tambah Rule
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <div className="space-y-2">
+        {Object.entries(rules).map(([key, rule]) => (
+          <Card key={key} className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium">Rule: {rule.type}</p>
+                <p className="text-sm text-gray-500">Password: {rule.password}</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleDeleteRule(key)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
   );
 }

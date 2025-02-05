@@ -37,7 +37,7 @@ export function AppSidebar() {
   const location = useLocation();
 
   return (
-    <Sidebar className="w-14">
+    <Sidebar className="w-12">
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
