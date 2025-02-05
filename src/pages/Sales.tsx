@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, Search, X } from "lucide-react";
+import { Calendar as CalendarIcon, Search, X, Eye, EyeOff } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -20,6 +20,10 @@ import {
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ref, get } from "firebase/database";
+import { db } from "@/lib/firebase";
+import { useToast } from "@/components/ui/use-toast";
 
 const Sales = () => {
   const [date, setDate] = useState<Date>(new Date());
@@ -27,29 +31,54 @@ const Sales = () => {
   const [isVerified, setIsVerified] = useState(false);
   const [showError, setShowError] = useState(false);
   const [password, setPassword] = useState("");
-  const OWNER_PASSWORD = "owner123"; // This should match the password set in Users
+  const [showPassword, setShowPassword] = useState(false);
+  const [selectedRule, setSelectedRule] = useState("");
+  const [rules, setRules] = useState<Record<string, any>>({});
+  const { toast } = useToast();
 
   useEffect(() => {
-    const unsubscribe = subscribeToSales((salesData) => {
-      // Sort sales by date in descending order (newest first)
-      const sortedSales = [...salesData].sort((a, b) => {
-        return new Date(b.date).getTime() - new Date(a.date).getTime();
-      });
-      setSales(sortedSales);
-    });
-
-    return () => unsubscribe();
+    const fetchRules = async () => {
+      const rulesRef = ref(db, 'rules');
+      const snapshot = await get(rulesRef);
+      if (snapshot.exists()) {
+        setRules(snapshot.val());
+      }
+    };
+    fetchRules();
   }, []);
 
   const handleVerify = () => {
-    if (password === OWNER_PASSWORD) {
+    const selectedRuleData = rules[selectedRule];
+    if (selectedRuleData && selectedRuleData.password === password) {
       setIsVerified(true);
       setPassword("");
+      toast({
+        title: "Berhasil",
+        description: "Verifikasi berhasil",
+      });
     } else {
       setShowError(true);
       setPassword("");
+      toast({
+        title: "Error",
+        description: "Password salah",
+        variant: "destructive",
+      });
     }
   };
+
+  useEffect(() => {
+    if (isVerified) {
+      const unsubscribe = subscribeToSales((salesData) => {
+        const sortedSales = [...salesData].sort((a, b) => {
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
+        });
+        setSales(sortedSales);
+      });
+
+      return () => unsubscribe();
+    }
+  }, [isVerified]);
 
   const filteredSales = sales.filter((sale) => {
     const saleDate = new Date(sale.date);
@@ -83,19 +112,40 @@ const Sales = () => {
               ) : (
                 <div className="space-y-4 mt-4">
                   <div>
-                    <select 
-                      className="w-full p-2 border rounded mb-4"
-                      defaultValue=""
+                    <Label>Pilih Rule</Label>
+                    <select
+                      className="w-full p-2 border rounded mt-1"
+                      value={selectedRule}
+                      onChange={(e) => setSelectedRule(e.target.value)}
                     >
-                      <option value="" disabled>Pilih Rule...</option>
-                      <option value="owner">Owner</option>
+                      <option value="">Pilih rule...</option>
+                      {Object.keys(rules).map((rule) => (
+                        <option key={rule} value={rule}>
+                          {rules[rule].type}
+                        </option>
+                      ))}
                     </select>
-                    <Input
-                      type="password"
-                      placeholder="Masukkan password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                    />
+                  </div>
+                  <div className="relative">
+                    <Label>Password</Label>
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4 text-gray-500" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-gray-500" />
+                        )}
+                      </button>
+                    </div>
                   </div>
                   <Button onClick={handleVerify} className="w-full">
                     Verifikasi
