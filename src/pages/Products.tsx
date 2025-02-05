@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Eye, EyeOff } from "lucide-react";
 import ProductGrid from "@/components/pos/ProductGrid";
 import { Product } from "@/types/pos";
 import { useToast } from "@/components/ui/use-toast";
@@ -31,7 +31,9 @@ const Products = () => {
   const [showVerification, setShowVerification] = useState(true);
   const [verificationPassword, setVerificationPassword] = useState("");
   const [selectedRule, setSelectedRule] = useState("");
-  const [rules, setRules] = useState<Record<string, string>>({});
+  const [rules, setRules] = useState<Record<string, any>>({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [showError, setShowError] = useState(false);
   const [newProduct, setNewProduct] = useState({
     name: "",
     regularPrice: "",
@@ -60,13 +62,16 @@ const Products = () => {
   }, [showVerification]);
 
   const handleVerify = () => {
-    if (rules[selectedRule] === verificationPassword) {
+    const selectedRuleData = rules[selectedRule];
+    if (selectedRuleData && selectedRuleData.password === verificationPassword) {
       setShowVerification(false);
+      setShowError(false);
       toast({
         title: "Berhasil",
         description: "Verifikasi berhasil",
       });
     } else {
+      setShowError(true);
       toast({
         title: "Error",
         description: "Password salah",
@@ -144,34 +149,62 @@ const Products = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Verifikasi Akses</AlertDialogTitle>
             <AlertDialogDescription>
-              <div className="space-y-4 mt-4">
-                <div>
-                  <Label>Pilih Rule</Label>
-                  <select
-                    className="w-full p-2 border rounded mt-1"
-                    value={selectedRule}
-                    onChange={(e) => setSelectedRule(e.target.value)}
+              {showError ? (
+                <div className="text-center space-y-4">
+                  <X className="mx-auto h-16 w-16 text-red-500" />
+                  <p className="text-red-500 font-semibold">
+                    Password salah!
+                  </p>
+                  <Button 
+                    onClick={() => setShowError(false)} 
+                    className="w-full"
                   >
-                    <option value="">Pilih rule...</option>
-                    {Object.keys(rules).map((rule) => (
-                      <option key={rule} value={rule}>
-                        {rule}
-                      </option>
-                    ))}
-                  </select>
+                    Coba Lagi
+                  </Button>
                 </div>
-                <div>
-                  <Label>Password</Label>
-                  <Input
-                    type="password"
-                    value={verificationPassword}
-                    onChange={(e) => setVerificationPassword(e.target.value)}
-                  />
+              ) : (
+                <div className="space-y-4 mt-4">
+                  <div>
+                    <Label>Pilih Rule</Label>
+                    <select
+                      className="w-full p-2 border rounded mt-1"
+                      value={selectedRule}
+                      onChange={(e) => setSelectedRule(e.target.value)}
+                    >
+                      <option value="">Pilih rule...</option>
+                      {Object.keys(rules).map((rule) => (
+                        <option key={rule} value={rule}>
+                          {rules[rule].type}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="relative">
+                    <Label>Password</Label>
+                    <div className="relative">
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        value={verificationPassword}
+                        onChange={(e) => setVerificationPassword(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4 text-gray-500" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-gray-500" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                  <Button onClick={handleVerify} className="w-full">
+                    Verifikasi
+                  </Button>
                 </div>
-                <Button onClick={handleVerify} className="w-full">
-                  Verifikasi
-                </Button>
-              </div>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
         </AlertDialogContent>
