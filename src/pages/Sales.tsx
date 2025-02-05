@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon, Search, X } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -12,10 +12,22 @@ import { cn } from "@/lib/utils";
 import { Sale } from "@/types/pos";
 import { subscribeToSales } from "@/services/saleService";
 import { formatIDR } from "@/lib/currency";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+} from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
 
 const Sales = () => {
   const [date, setDate] = useState<Date>(new Date());
   const [sales, setSales] = useState<Sale[]>([]);
+  const [isVerified, setIsVerified] = useState(false);
+  const [showError, setShowError] = useState(false);
+  const [password, setPassword] = useState("");
+  const OWNER_PASSWORD = "owner123"; // This should match the password set in Users
 
   useEffect(() => {
     const unsubscribe = subscribeToSales((salesData) => {
@@ -29,6 +41,16 @@ const Sales = () => {
     return () => unsubscribe();
   }, []);
 
+  const handleVerify = () => {
+    if (password === OWNER_PASSWORD) {
+      setIsVerified(true);
+      setPassword("");
+    } else {
+      setShowError(true);
+      setPassword("");
+    }
+  };
+
   const filteredSales = sales.filter((sale) => {
     const saleDate = new Date(sale.date);
     return (
@@ -37,6 +59,55 @@ const Sales = () => {
       saleDate.getFullYear() === date.getFullYear()
     );
   });
+
+  if (!isVerified) {
+    return (
+      <AlertDialog open={true}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Verifikasi Akses</AlertDialogTitle>
+            <AlertDialogDescription>
+              {showError ? (
+                <div className="text-center space-y-4">
+                  <X className="mx-auto h-16 w-16 text-red-500" />
+                  <p className="text-red-500 font-semibold">
+                    Password salah!
+                  </p>
+                  <Button 
+                    onClick={() => setShowError(false)} 
+                    className="w-full"
+                  >
+                    Coba Lagi
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4 mt-4">
+                  <div>
+                    <select 
+                      className="w-full p-2 border rounded mb-4"
+                      defaultValue=""
+                    >
+                      <option value="" disabled>Pilih Rule...</option>
+                      <option value="owner">Owner</option>
+                    </select>
+                    <Input
+                      type="password"
+                      placeholder="Masukkan password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                  </div>
+                  <Button onClick={handleVerify} className="w-full">
+                    Verifikasi
+                  </Button>
+                </div>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+        </AlertDialogContent>
+      </AlertDialog>
+    );
+  }
 
   return (
     <div className="p-6">
