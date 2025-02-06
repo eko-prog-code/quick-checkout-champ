@@ -73,7 +73,7 @@ const Index = () => {
     <div className="flex h-screen bg-gray-100">
       <div className="flex-1 p-6 overflow-auto">
         <h1 className="text-3xl font-bold mb-6">POS System</h1>
-        <ProductGrid products={products} onAddToCart={addToCart} />
+        <ProductGrid products={products} onAddToCart={addToCart} showEditButton={false} />
       </div>
       <Cart
         items={cartItems}
