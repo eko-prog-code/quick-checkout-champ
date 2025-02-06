@@ -7,23 +7,18 @@ const PRODUCTS_REF = 'products';
 
 export const createProduct = async (product: Omit<Product, 'id'>, imageFile?: File): Promise<void> => {
   try {
-    let imageUrl = '/placeholder.svg'; // Default image
-
+    let imageUrl = '/placeholder.svg';
     if (imageFile) {
-      // Upload image only if provided
       const imageRef = storageRef(storage, `product-images/${Date.now()}-${imageFile.name}`);
       const uploadResult = await uploadBytes(imageRef, imageFile);
       imageUrl = await getDownloadURL(uploadResult.ref);
     }
-
-    // Create product with image URL
     const newProductRef = push(ref(db, PRODUCTS_REF));
     await set(newProductRef, {
       ...product,
       id: newProductRef.key,
       image: imageUrl
     });
-
     console.log('Product created successfully');
   } catch (error) {
     console.error('Error creating product:', error);
@@ -43,6 +38,17 @@ export const updateProduct = async (product: Product): Promise<void> => {
     console.log('Product updated successfully');
   } catch (error) {
     console.error('Error updating product:', error);
+    throw error;
+  }
+};
+
+export const updateProductStock = async (productId: string, newStock: number): Promise<void> => {
+  try {
+    const productRef = ref(db, `${PRODUCTS_REF}/${productId}`);
+    await update(productRef, { stock: newStock });
+    console.log('Product stock updated successfully');
+  } catch (error) {
+    console.error('Error updating product stock:', error);
     throw error;
   }
 };
@@ -68,7 +74,5 @@ export const subscribeToProducts = (callback: (products: Product[]) => void): ()
     });
     callback(products);
   });
-
-  // Return unsubscribe function
   return () => off(productsRef);
 };
