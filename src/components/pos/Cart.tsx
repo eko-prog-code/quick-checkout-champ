@@ -1,4 +1,3 @@
-//Cart.tsx
 import { useState } from "react";
 import { CartItem, Sale } from "@/types/pos";
 import { Button } from "@/components/ui/button";
@@ -66,6 +65,12 @@ const Cart = ({
   };
 
   const handleSendToWhatsApp = () => {
+    // Jika nomor dimulai dengan "0", ganti dengan "62"
+    const trimmedNumber = whatsappNumber.trim();
+    const formattedWhatsappNumber = trimmedNumber.startsWith("0")
+      ? "62" + trimmedNumber.substring(1)
+      : trimmedNumber;
+
     const receiptText = `
 *Receipt Details*
 Buyer: ${buyerName}
@@ -80,7 +85,7 @@ ${items.map(item => `${item.name} x ${item.quantity} = ${formatIDR(item.regularP
 *Change:* ${formatIDR(Math.max(parseFloat(amountPaid.replace(/[,.]/g, '')) - subtotal, 0) || 0)}
     `.trim();
 
-    const whatsappUrl = `https://wa.me/${whatsappNumber.replace(/\D/g, '')}?text=${encodeURIComponent(receiptText)}`;
+    const whatsappUrl = `https://wa.me/${formattedWhatsappNumber.replace(/\D/g, '')}?text=${encodeURIComponent(receiptText)}`;
     window.open(whatsappUrl, '_blank');
   };
 
@@ -214,7 +219,7 @@ ${items.map(item => `${item.name} x ${item.quantity} = ${formatIDR(item.regularP
               <Input
                 value={whatsappNumber}
                 onChange={(e) => setWhatsappNumber(e.target.value)}
-                placeholder="Contoh: 628123456789"
+                placeholder="Contoh: 08123456789"
                 className="mb-4"
               />
             </div>
