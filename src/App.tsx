@@ -22,7 +22,7 @@ const App = () => (
         <SidebarProvider>
           <div className="min-h-screen flex w-full">
             <AppSidebar />
-             <main className="flex-1 ml-[200px]">
+             <main className="flex-1 ml-[-200px]">
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/products" element={<Products />} />
