@@ -144,6 +144,10 @@ ${items.map(item => `${item.name} x ${item.quantity} = ${formatIDR(item.regularP
     setAmountPaid("");
   };
 
+  // Hitung selisih antara jumlah bayar dan total penjualan
+  const paidAmountNum = parseFloat(amountPaid.replace(/[,.]/g, '')) || 0;
+  const difference = paidAmountNum - subtotal;
+
   return (
     <>
       <div className="w-full md:w-96 bg-white border-l shadow-lg flex flex-col slide-in">
@@ -264,14 +268,12 @@ ${items.map(item => `${item.name} x ${item.quantity} = ${formatIDR(item.regularP
               className="w-full"
             />
           </div>
-          {amountPaid && (
-            <div className="flex justify-between text-sm">
-              <span>Kembalian:</span>
-              <span>
-                {formatIDR(Math.max(parseFloat(amountPaid.replace(/[,.]/g, '')) - subtotal, 0) || 0)}
-              </span>
-            </div>
-          )}
+          <div className="flex justify-between text-sm">
+            <span>Kembalian:</span>
+            <span className={difference < 0 ? "text-red-500 font-bold" : ""}>
+              {formatIDR(difference)}
+            </span>
+          </div>
           <Button
             className="w-full"
             size="lg"
@@ -339,12 +341,12 @@ ${items.map(item => `${item.name} x ${item.quantity} = ${formatIDR(item.regularP
             </div>
             <div className="flex justify-between">
               <span>Jumlah Bayar</span>
-              <span>{formatIDR(parseFloat(amountPaid.replace(/[,.]/g, '')))}</span>
+              <span>{formatIDR(paidAmountNum)}</span>
             </div>
             <div className="flex justify-between">
               <span>Kembalian</span>
-              <span>
-                {formatIDR(Math.max(parseFloat(amountPaid.replace(/[,.]/g, '')) - subtotal, 0) || 0)}
+              <span className={difference < 0 ? "text-red-500 font-bold" : ""}>
+                {formatIDR(difference)}
               </span>
             </div>
           </div>
