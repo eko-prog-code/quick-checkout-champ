@@ -2,7 +2,7 @@ import { useState } from "react";
 import { CartItem, Sale } from "@/types/pos";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, Trash2, X, Printer, Send } from "lucide-react";
+import { Minus, Plus, Trash2, X, Printer, Send, ChevronDown, ChevronUp } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { formatIDR } from "@/lib/currency";
 import { createSale } from "@/services/saleService";
@@ -32,6 +32,7 @@ const Cart = ({
   const [showReceipt, setShowReceipt] = useState(false);
   const [buyerName, setBuyerName] = useState("");
   const [whatsappNumber, setWhatsappNumber] = useState("");
+  const [showBuyerForm, setShowBuyerForm] = useState(false);
   const { toast } = useToast();
 
   const subtotal = items.reduce(
@@ -206,57 +207,79 @@ ${items.map(item => `${item.name} x ${item.quantity} = ${formatIDR(item.regularP
         </div>
 
         <div className="p-4 border-t bg-muted">
-          <div className="space-y-4">
-            <div>
-              <Label>Nama Pembeli</Label>
-              <Input
-                value={buyerName}
-                onChange={(e) => setBuyerName(e.target.value)}
-                placeholder="Masukkan nama pembeli"
-                className="mb-2"
-              />
-              <Label>Nomor WhatsApp</Label>
-              <Input
-                value={whatsappNumber}
-                onChange={(e) => setWhatsappNumber(e.target.value)}
-                placeholder="Contoh: 08123456789"
-                className="mb-4"
-              />
-            </div>
-            <div className="flex justify-between mb-4">
-              <span className="font-bold">Total:</span>
-              <span className="font-bold">{formatIDR(subtotal)}</span>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Jumlah Bayar
-              </label>
-              <Input
-                type="text"
-                value={amountPaid}
-                onChange={(e) => setAmountPaid(e.target.value)}
-                onBlur={(e) => handleNumberBlur(e.target.value, setAmountPaid)}
-                placeholder="Masukkan jumlah"
-                className="w-full"
-              />
-            </div>
-            {amountPaid && (
-              <div className="flex justify-between text-sm">
-                <span>Kembalian:</span>
-                <span>
-                  {formatIDR(Math.max(parseFloat(amountPaid.replace(/[,.]/g, '')) - subtotal, 0) || 0)}
-                </span>
+          {/* Toggle button untuk menampilkan/sembunyikan form input pembeli */}
+          <div 
+            className="flex items-center justify-center cursor-pointer select-none"
+            onClick={() => setShowBuyerForm(prev => !prev)}
+          >
+            {showBuyerForm ? (
+              <div className="flex items-center space-x-1">
+                <ChevronUp className="w-6 h-6 animate-pulse" />
+                <span className="text-sm font-semibold">Sembunyikan Form</span>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-1">
+                <ChevronDown className="w-6 h-6 animate-pulse" />
+                <span className="text-sm font-semibold">Tampilkan Form</span>
               </div>
             )}
-            <Button
-              className="w-full"
-              size="lg"
-              onClick={handleCompleteSale}
-              disabled={items.length === 0}
-            >
-              Selesaikan Transaksi
-            </Button>
           </div>
+
+          {/* Form input pembeli dengan animasi slide */}
+          <div className={`overflow-hidden transition-all duration-300 ${showBuyerForm ? "max-h-[200px] mt-4" : "max-h-0"}`}>
+            <div className="space-y-4">
+              <div>
+                <Label>Nama Pembeli</Label>
+                <Input
+                  value={buyerName}
+                  onChange={(e) => setBuyerName(e.target.value)}
+                  placeholder="Masukkan nama pembeli"
+                  className="mb-2"
+                />
+                <Label>Nomor WhatsApp</Label>
+                <Input
+                  value={whatsappNumber}
+                  onChange={(e) => setWhatsappNumber(e.target.value)}
+                  placeholder="Contoh: 08123456789"
+                  className="mb-4"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-between mb-4">
+            <span className="font-bold">Total:</span>
+            <span className="font-bold">{formatIDR(subtotal)}</span>
+          </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">
+              Jumlah Bayar
+            </label>
+            <Input
+              type="text"
+              value={amountPaid}
+              onChange={(e) => setAmountPaid(e.target.value)}
+              onBlur={(e) => handleNumberBlur(e.target.value, setAmountPaid)}
+              placeholder="Masukkan jumlah"
+              className="w-full"
+            />
+          </div>
+          {amountPaid && (
+            <div className="flex justify-between text-sm">
+              <span>Kembalian:</span>
+              <span>
+                {formatIDR(Math.max(parseFloat(amountPaid.replace(/[,.]/g, '')) - subtotal, 0) || 0)}
+              </span>
+            </div>
+          )}
+          <Button
+            className="w-full"
+            size="lg"
+            onClick={handleCompleteSale}
+            disabled={items.length === 0}
+          >
+            Selesaikan Transaksi
+          </Button>
         </div>
       </div>
 
