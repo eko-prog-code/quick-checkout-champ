@@ -1,10 +1,19 @@
+import { useState } from "react";
 import { Product } from "@/types/pos";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, X, Search } from "lucide-react";
+import { Pencil, X, Search } from "lucide-react";
 import { formatIDR } from "@/lib/currency";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { updateProduct } from "@/services/productService";
+import { useToast } from "@/components/ui/use-toast";
 
 interface ProductGridProps {
   products: Product[];
@@ -14,10 +23,52 @@ interface ProductGridProps {
 
 const ProductGrid = ({ products, onAddToCart, onDeleteProduct }: ProductGridProps) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    regularPrice: "",
+    stock: "",
+  });
+  const { toast } = useToast();
 
   const filteredProducts = products.filter((product) =>
     product.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const handleEdit = (product: Product) => {
+    setEditingProduct(product);
+    setEditForm({
+      name: product.name,
+      regularPrice: product.regularPrice.toString(),
+      stock: product.stock.toString(),
+    });
+  };
+
+  const handleUpdate = async () => {
+    if (!editingProduct) return;
+
+    try {
+      const updatedProduct = {
+        ...editingProduct,
+        name: editForm.name,
+        regularPrice: parseFloat(editForm.regularPrice),
+        stock: parseInt(editForm.stock),
+      };
+
+      await updateProduct(updatedProduct);
+      setEditingProduct(null);
+      toast({
+        title: "Sukses",
+        description: "Data produk berhasil diperbarui",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Gagal memperbarui data produk",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -52,16 +103,64 @@ const ProductGrid = ({ products, onAddToCart, onDeleteProduct }: ProductGridProp
                 Stok: {product.stock}
               </p>
             </div>
-            <Button
-              onClick={() => onAddToCart(product)}
-              className="w-full"
-              disabled={product.stock === 0}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => handleEdit(product)}
+                className="flex-1"
+                variant="outline"
+              >
+                <Pencil className="h-4 w-4" />
+              </Button>
+              <Button
+                onClick={() => onAddToCart(product)}
+                className="flex-1"
+                disabled={product.stock === 0}
+              >
+                Tambah
+              </Button>
+            </div>
           </Card>
         ))}
       </div>
+
+      <Dialog open={!!editingProduct} onOpenChange={() => setEditingProduct(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Produk</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Nama Produk</Label>
+              <Input
+                value={editForm.name}
+                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                placeholder="Nama produk"
+              />
+            </div>
+            <div>
+              <Label>Harga</Label>
+              <Input
+                value={editForm.regularPrice}
+                onChange={(e) => setEditForm({ ...editForm, regularPrice: e.target.value })}
+                placeholder="Harga produk"
+                type="number"
+              />
+            </div>
+            <div>
+              <Label>Stok</Label>
+              <Input
+                value={editForm.stock}
+                onChange={(e) => setEditForm({ ...editForm, stock: e.target.value })}
+                placeholder="Jumlah stok"
+                type="number"
+              />
+            </div>
+            <Button onClick={handleUpdate} className="w-full">
+              Update
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

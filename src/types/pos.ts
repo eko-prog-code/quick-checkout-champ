@@ -17,4 +17,6 @@ export interface Sale {
   total: number;
   amountPaid: number;
   change: number;
+  buyerName: string;
+  whatsappNumber: string;
 }

@@ -1,4 +1,4 @@
-import { ref, push, remove, set, onValue, off } from 'firebase/database';
+import { ref, push, remove, set, onValue, off, update } from 'firebase/database';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '@/lib/firebase';
 import { Product } from '@/types/pos';
@@ -27,6 +27,22 @@ export const createProduct = async (product: Omit<Product, 'id'>, imageFile?: Fi
     console.log('Product created successfully');
   } catch (error) {
     console.error('Error creating product:', error);
+    throw error;
+  }
+};
+
+export const updateProduct = async (product: Product): Promise<void> => {
+  try {
+    const updates = {
+      name: product.name,
+      regularPrice: product.regularPrice,
+      stock: product.stock,
+    };
+    
+    await update(ref(db, `${PRODUCTS_REF}/${product.id}`), updates);
+    console.log('Product updated successfully');
+  } catch (error) {
+    console.error('Error updating product:', error);
     throw error;
   }
 };
