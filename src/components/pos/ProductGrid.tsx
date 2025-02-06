@@ -19,7 +19,7 @@ interface ProductGridProps {
   products: Product[];
   onAddToCart: (product: Product) => void;
   onDeleteProduct?: (productId: string) => void;
-  showEditButton?: boolean; // Prop baru untuk mengontrol tombol edit
+  showEditButton?: boolean;
   onEditProduct?: (product: Product) => Promise<void>;
 }
 
