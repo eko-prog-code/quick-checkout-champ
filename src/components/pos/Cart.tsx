@@ -1,3 +1,4 @@
+//Cart.tsx
 import { useState } from "react";
 import { CartItem, Sale } from "@/types/pos";
 import { Button } from "@/components/ui/button";
