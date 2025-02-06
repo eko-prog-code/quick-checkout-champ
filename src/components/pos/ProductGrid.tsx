@@ -1,3 +1,4 @@
+//ProductGrid.tsx
 import { useState } from "react";
 import { Product } from "@/types/pos";
 import { Card } from "@/components/ui/card";
