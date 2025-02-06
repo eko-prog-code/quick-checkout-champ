@@ -9,11 +9,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, X, Eye, EyeOff, Pencil } from "lucide-react";
+import { Plus, X, Eye, EyeOff } from "lucide-react";
 import ProductGrid from "@/components/pos/ProductGrid";
 import { Product } from "@/types/pos";
 import { useToast } from "@/components/ui/use-toast";
-import { createProduct, deleteProduct, subscribeToProducts, updateProduct, updateProductStock } from "@/services/productService";
+import {
+  createProduct,
+  deleteProduct,
+  subscribeToProducts,
+  updateProduct,
+  updateProductStock,
+} from "@/services/productService";
 import { formatNumber } from "@/lib/utils";
 import {
   AlertDialog,
@@ -39,12 +45,12 @@ const Products = () => {
     regularPrice: "",
     stock: "",
   });
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const { toast } = useToast();
 
+  // Ambil data rules dari Firebase (misalnya untuk verifikasi akses)
   useEffect(() => {
     const fetchRules = async () => {
-      const rulesRef = ref(db, 'rules');
+      const rulesRef = ref(db, "rules");
       const snapshot = await get(rulesRef);
       if (snapshot.exists()) {
         setRules(snapshot.val());
@@ -53,6 +59,7 @@ const Products = () => {
     fetchRules();
   }, []);
 
+  // Jika verifikasi sudah berhasil, lakukan subscribe produk secara realtime
   useEffect(() => {
     if (!showVerification) {
       const unsubscribe = subscribeToProducts((updatedProducts) => {
@@ -94,7 +101,7 @@ const Products = () => {
     try {
       await createProduct({
         name: newProduct.name,
-        regularPrice: parseFloat(newProduct.regularPrice.replace(/\./g, '')),
+        regularPrice: parseFloat(newProduct.regularPrice.replace(/\./g, "")),
         stock: parseInt(newProduct.stock),
         image: "/placeholder.svg",
       });
@@ -135,37 +142,8 @@ const Products = () => {
     }
   };
 
-  const handleEditProduct = async (product: Product) => {
-    setEditingProduct(product);
-  };
-
-  const handleUpdateProduct = async () => {
-    if (!editingProduct) return;
-
-    try {
-      await updateProduct(editingProduct);
-      setEditingProduct(null);
-      toast({
-        title: "Sukses",
-        description: "Produk berhasil diperbarui",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Gagal memperbarui produk",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handlePriceBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\./g, '');
-    if (value) {
-      const formattedValue = formatNumber(parseFloat(value));
-      setNewProduct(prev => ({ ...prev, regularPrice: formattedValue }));
-    }
-  };
-
+  // Fungsi add-to-cart sudah tersedia di ProductGrid, tetapi jika diperlukan
+  // fungsi ini juga bisa disesuaikan untuk update stok di realtime database.
   const handleAddToCart = async (product: Product) => {
     if (product.stock > 0) {
       try {
@@ -190,6 +168,14 @@ const Products = () => {
     }
   };
 
+  const handlePriceBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\./g, "");
+    if (value) {
+      const formattedValue = formatNumber(parseFloat(value));
+      setNewProduct((prev) => ({ ...prev, regularPrice: formattedValue }));
+    }
+  };
+
   if (showVerification) {
     return (
       <AlertDialog open={showVerification}>
@@ -200,13 +186,8 @@ const Products = () => {
               {showError ? (
                 <div className="text-center space-y-4">
                   <X className="mx-auto h-16 w-16 text-red-500" />
-                  <p className="text-red-500 font-semibold">
-                    Password salah!
-                  </p>
-                  <Button 
-                    onClick={() => setShowError(false)} 
-                    className="w-full"
-                  >
+                  <p className="text-red-500 font-semibold">Password salah!</p>
+                  <Button onClick={() => setShowError(false)} className="w-full">
                     Coba Lagi
                   </Button>
                 </div>
@@ -292,7 +273,10 @@ const Products = () => {
                   id="regularPrice"
                   value={newProduct.regularPrice}
                   onChange={(e) =>
-                    setNewProduct({ ...newProduct, regularPrice: e.target.value })
+                    setNewProduct({
+                      ...newProduct,
+                      regularPrice: e.target.value,
+                    })
                   }
                   onBlur={handlePriceBlur}
                 />
@@ -320,7 +304,7 @@ const Products = () => {
         onAddToCart={handleAddToCart}
         onDeleteProduct={handleDeleteProduct}
         showEditButton={true}
-        onEditProduct={handleEditProduct}
+        /* Jangan mengoper onEditProduct agar modal edit dikelola secara internal di ProductGrid */
       />
     </div>
   );
