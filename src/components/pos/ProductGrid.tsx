@@ -19,9 +19,10 @@ interface ProductGridProps {
   products: Product[];
   onAddToCart: (product: Product) => void;
   onDeleteProduct?: (productId: string) => void;
+  showEditButton?: boolean; // Prop baru untuk mengontrol tombol edit
 }
 
-const ProductGrid = ({ products, onAddToCart, onDeleteProduct }: ProductGridProps) => {
+const ProductGrid = ({ products, onAddToCart, onDeleteProduct, showEditButton = false }: ProductGridProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [editForm, setEditForm] = useState({
@@ -104,13 +105,15 @@ const ProductGrid = ({ products, onAddToCart, onDeleteProduct }: ProductGridProp
               </p>
             </div>
             <div className="flex gap-2">
-              <Button
-                onClick={() => handleEdit(product)}
-                className="flex-1"
-                variant="outline"
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
+              {showEditButton && (
+                <Button
+                  onClick={() => handleEdit(product)}
+                  className="flex-1"
+                  variant="outline"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              )}
               <Button
                 onClick={() => onAddToCart(product)}
                 className="flex-1"
