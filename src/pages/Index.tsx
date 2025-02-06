@@ -11,18 +11,17 @@ const Index = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Subscribe to products
+    // Subscribe to produk secara realtime
     const unsubscribe = subscribeToProducts((updatedProducts) => {
       setProducts(updatedProducts);
     });
-
-    // Cleanup subscription on unmount
     return () => unsubscribe();
   }, []);
 
   const addToCart = async (product: Product) => {
     if (product.stock > 0) {
       try {
+        // Kurangi stok produk sebanyak 1
         await updateProductStock(product.id, product.stock - 1);
         setCartItems((prev) => {
           const existingItem = prev.find((item) => item.id === product.id);
@@ -57,29 +56,37 @@ const Index = () => {
 
   const updateQuantity = async (productId: string, newQuantity: number) => {
     const product = products.find((p) => p.id === productId);
-    if (product && newQuantity <= product.stock) {
-      try {
-        await updateProductStock(productId, product.stock - newQuantity);
-        setCartItems((prev) =>
-          prev.map((item) =>
-            item.id === productId ? { ...item, quantity: newQuantity } : item
-          )
-        );
-        toast({
-          title: "Sukses",
-          description: "Jumlah produk berhasil diperbarui",
-        });
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Gagal memperbarui jumlah produk",
-          variant: "destructive",
-        });
-      }
-    } else {
+    const cartItem = cartItems.find((item) => item.id === productId);
+    if (!product || !cartItem) return;
+
+    // Total stok awal = stok saat ini + jumlah yang sudah ada di keranjang
+    const availableTotal = product.stock + cartItem.quantity;
+    if (newQuantity > availableTotal) {
       toast({
         title: "Error",
         description: "Stok tidak mencukupi",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const difference = newQuantity - cartItem.quantity; // selisih penambahan (positif) atau pengurangan (negatif)
+    try {
+      // Update stok produk berdasarkan selisih
+      await updateProductStock(productId, product.stock - difference);
+      setCartItems((prev) =>
+        prev.map((item) =>
+          item.id === productId ? { ...item, quantity: newQuantity } : item
+        )
+      );
+      toast({
+        title: "Sukses",
+        description: "Jumlah produk berhasil diperbarui",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Gagal memperbarui jumlah produk",
         variant: "destructive",
       });
     }
@@ -87,9 +94,11 @@ const Index = () => {
 
   const removeFromCart = async (productId: string) => {
     const product = products.find((p) => p.id === productId);
-    if (product) {
+    const cartItem = cartItems.find((item) => item.id === productId);
+    if (product && cartItem) {
       try {
-        await updateProductStock(productId, product.stock + 1);
+        // Kembalikan seluruh jumlah item di keranjang ke stok produk
+        await updateProductStock(productId, product.stock + cartItem.quantity);
         setCartItems((prev) => prev.filter((item) => item.id !== productId));
         toast({
           title: "Sukses",
