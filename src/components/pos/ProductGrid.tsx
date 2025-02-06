@@ -1,4 +1,3 @@
-//ProductGrid.tsx
 import { useState } from "react";
 import { Product } from "@/types/pos";
 import { Card } from "@/components/ui/card";
@@ -21,15 +20,14 @@ interface ProductGridProps {
   onAddToCart: (product: Product) => void;
   onDeleteProduct?: (productId: string) => void;
   showEditButton?: boolean;
-  onEditProduct?: (product: Product) => Promise<void>;
+  // Tidak mengoper onEditProduct agar modal edit dikelola secara lokal
 }
 
-const ProductGrid = ({ 
-  products, 
-  onAddToCart, 
-  onDeleteProduct, 
+const ProductGrid = ({
+  products,
+  onAddToCart,
+  onDeleteProduct,
   showEditButton = false,
-  onEditProduct 
 }: ProductGridProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -44,17 +42,14 @@ const ProductGrid = ({
     product.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleEdit = async (product: Product) => {
-    if (onEditProduct) {
-      await onEditProduct(product);
-    } else {
-      setEditingProduct(product);
-      setEditForm({
-        name: product.name,
-        regularPrice: product.regularPrice.toString(),
-        stock: product.stock.toString(),
-      });
-    }
+  // Ketika tombol pencil diklik, set state lokal untuk membuka modal edit
+  const handleEdit = (product: Product) => {
+    setEditingProduct(product);
+    setEditForm({
+      name: product.name,
+      regularPrice: product.regularPrice.toString(),
+      stock: product.stock.toString(),
+    });
   };
 
   const handleUpdate = async () => {
@@ -138,6 +133,7 @@ const ProductGrid = ({
         ))}
       </div>
 
+      {/* Modal Edit Produk */}
       <Dialog open={!!editingProduct} onOpenChange={() => setEditingProduct(null)}>
         <DialogContent>
           <DialogHeader>
@@ -156,7 +152,9 @@ const ProductGrid = ({
               <Label>Harga</Label>
               <Input
                 value={editForm.regularPrice}
-                onChange={(e) => setEditForm({ ...editForm, regularPrice: e.target.value })}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, regularPrice: e.target.value })
+                }
                 placeholder="Harga produk"
                 type="number"
               />
@@ -165,7 +163,9 @@ const ProductGrid = ({
               <Label>Stok</Label>
               <Input
                 value={editForm.stock}
-                onChange={(e) => setEditForm({ ...editForm, stock: e.target.value })}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, stock: e.target.value })
+                }
                 placeholder="Jumlah stok"
                 type="number"
               />
