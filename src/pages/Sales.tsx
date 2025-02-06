@@ -89,6 +89,9 @@ const Sales = () => {
     );
   });
 
+  // Calculate total daily sales
+  const totalDailySales = filteredSales.reduce((total, sale) => total + sale.total, 0);
+
   if (!isVerified) {
     return (
       <AlertDialog open={true}>
@@ -185,6 +188,13 @@ const Sales = () => {
             />
           </PopoverContent>
         </Popover>
+      </div>
+
+      {/* Display total daily sales */}
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold">
+          Total Penjualan Harian: {formatIDR(totalDailySales)}
+        </h2>
       </div>
 
       {filteredSales.length > 0 ? (
