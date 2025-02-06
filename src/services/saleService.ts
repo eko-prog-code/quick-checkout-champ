@@ -1,4 +1,5 @@
-import { ref, push, onValue, off } from 'firebase/database';
+
+import { ref, push, onValue, off, remove } from 'firebase/database';
 import { db } from '@/lib/firebase';
 import { Sale } from '@/types/pos';
 
@@ -14,6 +15,16 @@ export const createSale = async (sale: Omit<Sale, 'id'>): Promise<void> => {
     console.log('Sale recorded successfully');
   } catch (error) {
     console.error('Error recording sale:', error);
+    throw error;
+  }
+};
+
+export const deleteSale = async (saleId: string): Promise<void> => {
+  try {
+    const saleRef = ref(db, `${SALES_REF}/${saleId}`);
+    await remove(saleRef);
+  } catch (error) {
+    console.error('Error deleting sale:', error);
     throw error;
   }
 };

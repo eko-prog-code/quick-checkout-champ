@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, Search, X, Eye, EyeOff } from "lucide-react";
+import { Calendar as CalendarIcon, Search, X, Eye, EyeOff, Trash2 } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Sale } from "@/types/pos";
-import { subscribeToSales } from "@/services/saleService";
+import { subscribeToSales, deleteSale } from "@/services/saleService";
 import { formatIDR } from "@/lib/currency";
 import {
   AlertDialog,
@@ -18,6 +18,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,6 +37,7 @@ const Sales = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [selectedRule, setSelectedRule] = useState("");
   const [rules, setRules] = useState<Record<string, any>>({});
+  const [saleToDelete, setSaleToDelete] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -46,6 +50,25 @@ const Sales = () => {
     };
     fetchRules();
   }, []);
+
+  const handleDeleteSale = async () => {
+    if (saleToDelete) {
+      try {
+        await deleteSale(saleToDelete);
+        setSaleToDelete(null);
+        toast({
+          title: "Berhasil",
+          description: "Data penjualan berhasil dihapus",
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Gagal menghapus data penjualan",
+          variant: "destructive",
+        });
+      }
+    }
+  };
 
   const handleVerify = () => {
     const selectedRuleData = rules[selectedRule];
@@ -190,7 +213,6 @@ const Sales = () => {
         </Popover>
       </div>
 
-      {/* Display total daily sales */}
       <div className="mb-6">
         <h2 className="text-xl font-semibold">
           Total Penjualan Harian: {formatIDR(totalDailySales)}
@@ -205,7 +227,7 @@ const Sales = () => {
               className="bg-white p-4 rounded-lg shadow space-y-3"
             >
               <div className="flex justify-between items-start">
-                <div>
+                <div className="flex-1">
                   <p className="text-sm text-muted-foreground">
                     {new Date(sale.date).toLocaleString("id-ID")}
                   </p>
@@ -226,6 +248,14 @@ const Sales = () => {
                     ))}
                   </div>
                 </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                  onClick={() => setSaleToDelete(sale.id)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
               </div>
               <div className="pt-3 border-t">
                 <div className="flex justify-between font-medium">
@@ -249,6 +279,21 @@ const Sales = () => {
           Tidak ada transaksi penjualan untuk ditampilkan.
         </div>
       )}
+
+      <AlertDialog open={!!saleToDelete} onOpenChange={() => setSaleToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Konfirmasi Hapus</AlertDialogTitle>
+            <AlertDialogDescription>
+              Apakah Anda yakin ingin menghapus data penjualan ini?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setSaleToDelete(null)}>Tidak</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteSale}>Ya</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
