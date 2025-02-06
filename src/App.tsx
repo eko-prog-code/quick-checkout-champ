@@ -21,7 +21,7 @@ const App = () => (
       <BrowserRouter>
         <SidebarProvider>
           <div className="min-h-screen flex w-full">
-            <AppSidebar className="w-12" />
+            <AppSidebar />
             <main className="flex-1 w-full">
               <Routes>
                 <Route path="/" element={<Index />} />

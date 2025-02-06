@@ -20,9 +20,16 @@ interface ProductGridProps {
   onAddToCart: (product: Product) => void;
   onDeleteProduct?: (productId: string) => void;
   showEditButton?: boolean; // Prop baru untuk mengontrol tombol edit
+  onEditProduct?: (product: Product) => Promise<void>;
 }
 
-const ProductGrid = ({ products, onAddToCart, onDeleteProduct, showEditButton = false }: ProductGridProps) => {
+const ProductGrid = ({ 
+  products, 
+  onAddToCart, 
+  onDeleteProduct, 
+  showEditButton = false,
+  onEditProduct 
+}: ProductGridProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [editForm, setEditForm] = useState({
@@ -36,13 +43,17 @@ const ProductGrid = ({ products, onAddToCart, onDeleteProduct, showEditButton = 
     product.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleEdit = (product: Product) => {
-    setEditingProduct(product);
-    setEditForm({
-      name: product.name,
-      regularPrice: product.regularPrice.toString(),
-      stock: product.stock.toString(),
-    });
+  const handleEdit = async (product: Product) => {
+    if (onEditProduct) {
+      await onEditProduct(product);
+    } else {
+      setEditingProduct(product);
+      setEditForm({
+        name: product.name,
+        regularPrice: product.regularPrice.toString(),
+        stock: product.stock.toString(),
+      });
+    }
   };
 
   const handleUpdate = async () => {
