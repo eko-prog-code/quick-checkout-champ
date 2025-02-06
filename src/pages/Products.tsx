@@ -9,11 +9,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, X, Eye, EyeOff } from "lucide-react";
+import { Plus, X, Eye, EyeOff, Pencil } from "lucide-react"; // Import ikon Pencil
 import ProductGrid from "@/components/pos/ProductGrid";
 import { Product } from "@/types/pos";
 import { useToast } from "@/components/ui/use-toast";
-import { createProduct, deleteProduct, subscribeToProducts } from "@/services/productService";
+import { createProduct, deleteProduct, subscribeToProducts, updateProduct } from "@/services/productService"; // Import updateProduct
 import { formatNumber } from "@/lib/utils";
 import {
   AlertDialog,
@@ -39,6 +39,7 @@ const Products = () => {
     regularPrice: "",
     stock: "",
   });
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null); // State untuk produk yang sedang diedit
   const { toast } = useToast();
 
   useEffect(() => {
@@ -129,6 +130,29 @@ const Products = () => {
       toast({
         title: "Error",
         description: "Gagal menghapus produk. Silakan coba lagi.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEditProduct = async (product: Product) => {
+    setEditingProduct(product); // Set produk yang sedang diedit
+  };
+
+  const handleUpdateProduct = async () => {
+    if (!editingProduct) return;
+
+    try {
+      await updateProduct(editingProduct); // Update produk
+      setEditingProduct(null); // Reset produk yang sedang diedit
+      toast({
+        title: "Sukses",
+        description: "Produk berhasil diperbarui",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Gagal memperbarui produk",
         variant: "destructive",
       });
     }
@@ -271,6 +295,8 @@ const Products = () => {
         products={products}
         onAddToCart={() => {}}
         onDeleteProduct={handleDeleteProduct}
+        showEditButton={true} // Aktifkan tombol edit
+        onEditProduct={handleEditProduct} // Tambahkan handler untuk edit produk
       />
     </div>
   );
