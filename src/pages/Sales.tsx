@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, Search, X, Eye, EyeOff, Trash } from "lucide-react";
+import { Calendar as CalendarIcon, Search, X, Eye, EyeOff } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Sale } from "@/types/pos";
-import { subscribeToSales, deleteSale } from "@/services/saleService"; // Import deleteSale function
+import { subscribeToSales } from "@/services/saleService";
 import { formatIDR } from "@/lib/currency";
 import {
   AlertDialog,
@@ -91,22 +91,6 @@ const Sales = () => {
 
   // Calculate total daily sales
   const totalDailySales = filteredSales.reduce((total, sale) => total + sale.total, 0);
-
-  const handleDeleteSale = async (saleId: string) => {
-    try {
-      await deleteSale(saleId); // Call the deleteSale function
-      toast({
-        title: "Berhasil",
-        description: "Penjualan berhasil dihapus",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Gagal menghapus penjualan",
-        variant: "destructive",
-      });
-    }
-  };
 
   if (!isVerified) {
     return (
@@ -242,12 +226,6 @@ const Sales = () => {
                     ))}
                   </div>
                 </div>
-                <button
-                  onClick={() => handleDeleteSale(sale.id)}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  <Trash className="h-5 w-5" />
-                </button>
               </div>
               <div className="pt-3 border-t">
                 <div className="flex justify-between font-medium">
