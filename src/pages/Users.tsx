@@ -10,12 +10,13 @@ import {
   AlertDialogTitle,
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog";
-import { X } from "lucide-react";
+import { X, Eye, EyeOff } from "lucide-react";
 
 const Users = () => {
   const [password, setPassword] = useState("");
   const [isVerified, setIsVerified] = useState(false);
   const [showError, setShowError] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); // State untuk show/hide password
   const { toast } = useToast();
   const ADMIN_PASSWORD = "HezekiahEthan123";
 
@@ -55,13 +56,24 @@ const Users = () => {
                 </div>
               ) : (
                 <div className="space-y-4 mt-4">
-                  <div>
+                  <div className="relative">
                     <Input
-                      type="password"
+                      type={showPassword ? "text" : "password"} // Toggle type berdasarkan state showPassword
                       placeholder="Masukkan password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4 text-gray-500" />
+                      ) : (
+                        <Eye className="h-4 w-4 text-gray-500" />
+                      )}
+                    </button>
                   </div>
                   <Button onClick={handleVerify} className="w-full">
                     Verifikasi
