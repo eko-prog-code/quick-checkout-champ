@@ -9,11 +9,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus, X, Eye, EyeOff, Pencil } from "lucide-react"; // Import ikon Pencil
+import { Plus, X, Eye, EyeOff, Pencil } from "lucide-react";
 import ProductGrid from "@/components/pos/ProductGrid";
 import { Product } from "@/types/pos";
 import { useToast } from "@/components/ui/use-toast";
-import { createProduct, deleteProduct, subscribeToProducts, updateProduct } from "@/services/productService"; // Import updateProduct
+import { createProduct, deleteProduct, subscribeToProducts, updateProduct, updateProductStock } from "@/services/productService";
 import { formatNumber } from "@/lib/utils";
 import {
   AlertDialog,
@@ -39,7 +39,7 @@ const Products = () => {
     regularPrice: "",
     stock: "",
   });
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null); // State untuk produk yang sedang diedit
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -136,15 +136,15 @@ const Products = () => {
   };
 
   const handleEditProduct = async (product: Product) => {
-    setEditingProduct(product); // Set produk yang sedang diedit
+    setEditingProduct(product);
   };
 
   const handleUpdateProduct = async () => {
     if (!editingProduct) return;
 
     try {
-      await updateProduct(editingProduct); // Update produk
-      setEditingProduct(null); // Reset produk yang sedang diedit
+      await updateProduct(editingProduct);
+      setEditingProduct(null);
       toast({
         title: "Sukses",
         description: "Produk berhasil diperbarui",
@@ -163,6 +163,30 @@ const Products = () => {
     if (value) {
       const formattedValue = formatNumber(parseFloat(value));
       setNewProduct(prev => ({ ...prev, regularPrice: formattedValue }));
+    }
+  };
+
+  const handleAddToCart = async (product: Product) => {
+    if (product.stock > 0) {
+      try {
+        await updateProductStock(product.id, product.stock - 1);
+        toast({
+          title: "Sukses",
+          description: "Produk berhasil ditambahkan ke keranjang",
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Gagal menambahkan produk ke keranjang",
+          variant: "destructive",
+        });
+      }
+    } else {
+      toast({
+        title: "Error",
+        description: "Stok produk habis",
+        variant: "destructive",
+      });
     }
   };
 
@@ -293,10 +317,10 @@ const Products = () => {
       </div>
       <ProductGrid
         products={products}
-        onAddToCart={() => {}}
+        onAddToCart={handleAddToCart}
         onDeleteProduct={handleDeleteProduct}
-        showEditButton={true} // Aktifkan tombol edit
-        onEditProduct={handleEditProduct} // Tambahkan handler untuk edit produk
+        showEditButton={true}
+        onEditProduct={handleEditProduct}
       />
     </div>
   );
