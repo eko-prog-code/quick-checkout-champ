@@ -199,6 +199,12 @@ const Sales = () => {
                   <p className="text-sm text-muted-foreground">
                     {new Date(sale.date).toLocaleString("id-ID")}
                   </p>
+                  <p className="font-medium mt-1">
+                    Pembeli: {sale.buyerName}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    WhatsApp: {sale.whatsappNumber}
+                  </p>
                   <div className="mt-2 space-y-1">
                     {sale.items.map((item) => (
                       <div key={item.id} className="flex justify-between">

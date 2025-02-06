@@ -20,7 +20,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { ref, set, get, remove } from "firebase/database";
 import { db } from "@/lib/firebase";
 import { Card } from "@/components/ui/card";
-import { X } from "lucide-react";
+import { X, Eye, EyeOff } from "lucide-react";
 
 interface Rule {
   type: string;
@@ -30,6 +30,7 @@ interface Rule {
 export function UserRules() {
   const [isOpen, setIsOpen] = useState(false);
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [ruleType, setRuleType] = useState("");
   const [rules, setRules] = useState<Record<string, Rule>>({});
   const { toast } = useToast();
@@ -135,11 +136,26 @@ export function UserRules() {
             </div>
             <div>
               <Label>Password</Label>
-              <Input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-0 top-0"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </Button>
+              </div>
             </div>
             <Button onClick={handleAddRule} className="w-full">
               Tambah Rule
